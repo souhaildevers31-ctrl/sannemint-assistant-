@@ -4718,5 +4718,20 @@ summary{cursor:pointer;padding:4px 0;font-weight:600}
   v45Init();
 })();
 </script>
+<script>
+  // Force l'appel automatique à l'API Gemini
+  window.askGeminiAuto = async function(userPrompt) {
+    try {
+      const res = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: userPrompt })
+      });
+      const data = await res.json();
+      return data.reply;
+    } catch (e) {
+      return null;
+    }
+  };
 </body>
 </html>
