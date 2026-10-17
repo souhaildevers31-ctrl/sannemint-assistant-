@@ -4717,21 +4717,51 @@ summary{cursor:pointer;padding:4px 0;font-weight:600}
   v44Init();
   v45Init();
 })();
-</script>
 <script>
-  // Force l'appel automatique à l'API Gemini
-  window.askGeminiAuto = async function(userPrompt) {
+  // Remplace la fonction de demande pour qu'elle passe TOUJOURS par Gemini Vercel
+  const originalAsk = window.askAI || function(){};
+  
+  window.askGeminiAuto = async function(promptText) {
     try {
       const res = await fetch('/api/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: userPrompt })
+        body: JSON.stringify({ prompt: promptText })
       });
       const data = await res.json();
-      return data.reply;
+      return data.reply || "Je n'ai pas pu obtenir de réponse.";
     } catch (e) {
-      return null;
+      return "Erreur de connexion au serveur Gemini.";
     }
   };
+
+  // Intercepte les requêtes directement depuis le champ de saisie
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('form') || document.querySelector('#wayForm');
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        const input = form.querySelector('input[type="text"]') || form.querySelector('input');
+        if (input && input.value) {
+          const query = input.value;
+          // Si le message n'est pas une commande locale simple
+          if (!query.startsWith('/')) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Affichage de la bulle / pensée pendant la recherche
+            const statusElem = document.querySelector('.status') || document.querySelector('#status');
+            if (statusElem) statusElem.textContent = "Réflexion en cours...";
+
+            const reply = await window.askGeminiAuto(query);
+            
+            // Affiche la réponse de Gemini directement
+            const speakElem = document.querySelector('#speech') || document.querySelector('.speech') || document.body;
+            alert(reply); // Affiche la réponse directement
+          }
+        }
+      }, true);
+    }
+  });
+</script>
 </body>
 </html>
